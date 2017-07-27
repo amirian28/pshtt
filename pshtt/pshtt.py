@@ -212,7 +212,16 @@ def basic_check(endpoint):
 
     except requests.exceptions.ConnectionError as err:
         endpoint.live = False
+
+        logging.debug("Connection error with request.")
         logging.debug("{0}".format(err))
+
+        full_error = "{0}".format(err)
+
+        if 'Name or service not known' in full_error:
+            endpoint.connection_error = 'unknown service'
+        elif 'timed out' in full_error:
+            endpoint.connection_error = 'timeout'
         return
 
     # And this is the parent of ConnectionError and other things.

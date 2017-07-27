@@ -38,6 +38,7 @@ class Endpoint:
         self.live = None
         self.redirect = None
         self.unknown_error = False
+        self.connection_error = None
 
         # If an endpoint redirects, characterize the redirect behavior
         self.redirect_immediately_to = None
@@ -95,6 +96,7 @@ class Endpoint:
             'redirect_eventually_to_external': self.redirect_eventually_to_external,
             'redirect_eventually_to_subdomain': self.redirect_eventually_to_subdomain,
             'unknown_error': self.unknown_error,
+            'connection_error': self.connection_error,
         }
 
         if self.protocol == "https":
