@@ -51,6 +51,7 @@ class Endpoint:
         self.redirect_eventually_to_http = None
         self.redirect_eventually_to_external = None
         self.redirect_eventually_to_subdomain = None
+        self.redirect_eventually_to_www = None
 
         # Only HTTPS endpoints have these.
         # Initialize all of them to None, so that it's
@@ -94,6 +95,7 @@ class Endpoint:
             'redirect_eventually_to_http': self.redirect_eventually_to_http,
             'redirect_eventually_to_external': self.redirect_eventually_to_external,
             'redirect_eventually_to_subdomain': self.redirect_eventually_to_subdomain,
+            'redirect_eventually_to_www': self.redirect_eventually_to_www,
             'unknown_error': self.unknown_error,
         }
 

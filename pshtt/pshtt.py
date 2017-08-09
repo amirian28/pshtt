@@ -285,8 +285,15 @@ def basic_check(endpoint):
             subdomain_immediate = urlparse.urlparse(immediate).hostname
             base_immediate = parent_domain_for(subdomain_immediate)
 
+            immediate = immediate.rstrip('/')
+            print(immediate)
+            print(endpoint.protocol)
+            print(endpoint.host)
             endpoint.redirect_immediately_to = immediate
             endpoint.redirect_immediately_to_www = re.match(r'^https?://www\.', immediate)
+            if endpoint.redirect_immediately_to_www:
+                print('redirect immediately to www ')
+                endpoint.redirect_immediately_to_www = True
             endpoint.redirect_immediately_to_https = immediate.startswith("https://")
             endpoint.redirect_immediately_to_http = immediate.startswith("http://")
             endpoint.redirect_immediately_to_external = (base_original != base_immediate)
@@ -298,7 +305,7 @@ def basic_check(endpoint):
             if ultimate_req is not None:
                 # For ultimate destination, use the URL we arrived at,
                 # not Location header. Auto-resolves relative redirects.
-                eventual = ultimate_req.url
+                eventual = ultimate_req.url.rstrip('/')
 
                 # The hostname of the eventual destination.
                 # The parent domain of the eventual destination.
@@ -306,6 +313,10 @@ def basic_check(endpoint):
                 base_eventual = parent_domain_for(subdomain_eventual)
 
                 endpoint.redirect_eventually_to = eventual
+                endpoint.redirect_eventually_to_www = re.match(r'^https?://www\.', eventual)
+                if endpoint.redirect_eventually_to_www:
+                    print('redirect eventually to www ')
+                    endpoint.redirect_eventually_to_www = True
                 endpoint.redirect_eventually_to_https = eventual.startswith("https://")
                 endpoint.redirect_eventually_to_http = eventual.startswith("http://")
                 endpoint.redirect_eventually_to_external = (base_original != base_eventual)
@@ -509,7 +520,6 @@ def canonical_endpoint(http, httpwww, https, httpswww):
     #   https:// -> 200, http:// -> http://www
 
     at_least_one_www_used = httpswww.live or httpwww.live
-
     def root_unused(endpoint):
         return (
             endpoint.redirect or
@@ -530,14 +540,15 @@ def canonical_endpoint(http, httpwww, https, httpswww):
 
     def goes_to_www(endpoint):
         return (
-            endpoint.redirect_immediately_to_www and
-            (not endpoint.redirect_immediately_to_external)
+            (endpoint.redirect_immediately_to_www and
+            (not endpoint.redirect_immediately_to_external))
+            or 
+            (endpoint.redirect_eventually_to_www and 
+            (not endpoint.redirect_eventually_to_external))
         )
 
     all_roots_unused = root_unused(https) and root_unused(http)
-
     all_roots_down = root_down(https) and root_down(http)
-
     is_www = (
         at_least_one_www_used and
         all_roots_unused and (
@@ -546,6 +557,20 @@ def canonical_endpoint(http, httpwww, https, httpswww):
             goes_to_www(http)
         )
     )
+    print('at least one www used ', at_least_one_www_used)
+    print('all roots unused ', all_roots_unused)
+    print('all roots down ', all_roots_down)
+
+    print('root down https ', root_down(https))
+    print('root down http ', root_down(http))
+    print('goes to www http ', goes_to_www(http))
+    print('goes to www https ', goes_to_www(https))
+    print('redirect immediately to www http', http.redirect_immediately_to_www)
+    print('redirect immediately to www https', https.redirect_immediately_to_www)
+    print('redirect immediately to external http',\
+            http.redirect_immediately_to_external)
+    print('redirect immediately to external https',\
+            https.redirect_immediately_to_external)
 
     # A domain is "canonically" at https if:
     #  * at least one of its https endpoints is live and
@@ -585,7 +610,6 @@ def canonical_endpoint(http, httpwww, https, httpswww):
     all_http_unused = http_unused(http) and http_unused(httpwww)
     both_http_down = (not http.live) and (not httpwww.live)
     at_least_one_http_upgrades = http_upgrades(http) or http_upgrades(httpwww)
-
     is_https = (
         at_least_one_https_endpoint and
         all_http_unused and
